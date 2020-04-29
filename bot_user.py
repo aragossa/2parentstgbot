@@ -65,6 +65,15 @@ class Botuser():
 	    DO UPDATE SET lang = '{1}';
             """.format(ref_key, lang, self.uid, datetime.datetime.now()))
 
+    def join_aggrbot (self, lang, ref_key='Notset'):
+        self.dbconnector.execute_insert_query("""
+        INSERT INTO core.users
+	    ( ref_id, lang, interface, id, test_bot_join_date)
+	    VALUES ( 'Notset', 'rus', 'TG', {0}, '{1}')
+	    ON CONFLICT ON CONSTRAINT pk_users_id
+	    DO UPDATE SET aggregator_bot_join_date = '{1}';
+            """.format(self.uid, datetime.datetime.now()))
+
     def save_answer(self, question_num, answer):
         self.dbconnector.execute_insert_query("""
                 INSERT INTO
