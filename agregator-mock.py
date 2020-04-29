@@ -21,7 +21,7 @@ bot = telebot.TeleBot(TOKEN, threaded=True)
 @bot.message_handler(commands=['start'])
 def handlestart(m):
     try:
-        user = Botuser(m.chat.id)
+        user = Botuser(uid=m.chat.id, bot=bot)
         user.join_aggrbot()
         bot.send_message(chat_id=m.chat.id, text='Привет. Чат бот находится в разработке, скоро все будет готово')
     except:
