@@ -65,7 +65,7 @@ class Botuser():
 	    DO UPDATE SET lang = '{1}';
             """.format(ref_key, lang, self.uid, datetime.datetime.now()))
 
-    def join_aggrbot (self, lang, ref_key='Notset'):
+    def join_aggrbot (self):
         self.dbconnector.execute_insert_query("""
         INSERT INTO core.users
 	    ( ref_id, lang, interface, id, test_bot_join_date)
