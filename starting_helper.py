@@ -2,14 +2,14 @@ import dbconnector
 from dbconnector import Dbconnetor
 
 
-def check_status(user, ref_key):
+def check_status(user, ref_key, last_name, first_name, username):
     dbconnector = Dbconnetor()
     if not user.isauth():
         lang = user.check_status_new_user(ref_key)
         if lang:
             """ Добавление пользователя в базу с полученным языком """
             """ Отправка первого вопроса """
-            user.join_to_bot_users (lang=lang, ref_key=ref_key)
+            user.join_to_bot_users(lang=lang, ref_key=ref_key, last_name=last_name, first_name=first_name, username=username)
             user.send_message(message_index='JOIN_MESSAGE')
             max_count_questions = dbconnector.count_questions()
             max_count_additional_questions = dbconnector.count_additional_questions()

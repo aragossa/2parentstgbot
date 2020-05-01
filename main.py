@@ -44,7 +44,10 @@ def handlestart(m):
             ref_key = m.text.replace('/start ', '')
             if ref_key == ('/start'):
                 ref_key=None
-            starting_helper.check_status(user=user, ref_key=ref_key)
+            last_name = m.from_user.last_name
+            first_name = m.from_user.first_name
+            username = m.from_user.username
+            starting_helper.check_status(user=user, ref_key=ref_key, last_name=last_name, first_name=first_name, username=username)
     except:
         logging.exception(str(m))
         logging.exception('Got exception on main handler')
@@ -94,7 +97,10 @@ def test_answer_handler(call):
     try:
         lang = call.data[5:]
         user = Botuser(uid=call.message.chat.id, bot=bot)
-        user.join_to_bot_users(lang=lang)
+        first_name = call.from_user.first_name
+        username = call.from_user.username
+        last_name = call.from_user.last_name
+        user.join_to_bot_users(lang=lang, last_name=last_name, first_name=first_name, username=username)
         if not user.isauth():
             send_message = user.select_message('JOIN_MESSAGE')
         else:

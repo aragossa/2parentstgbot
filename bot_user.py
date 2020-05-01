@@ -13,7 +13,8 @@ class Botuser():
         self.dbconnector = Dbconnetor()
 
     def isauth(self):
-        lang = self.dbconnector.execute_select_query("SELECT lang from core.users WHERE users.user_id = {}".format(self.uid))
+        lang = self.dbconnector.execute_select_query(
+            "SELECT lang from core.users WHERE users.user_id = {}".format(self.uid))
         if lang:
             return lang[0]
 
@@ -70,14 +71,15 @@ class Botuser():
         self.change_user_state('{}_{}'.format(test_type, question_num))
         self.bot.send_message(chat_id=self.uid, text=text, reply_markup=keyboard)
 
-    def join_to_bot_users(self, lang, ref_key='Notset'):
+    def join_to_bot_users(self, lang, last_name, first_name, username, ref_key='Notset'):
         self.dbconnector.execute_insert_query("""
         INSERT INTO core.users
-	        ( ref_id, lang, interface, user_id, test_bot_join_date)
+	        ( ref_id, lang, interface, user_id, last_name, first_name, username, test_bot_join_date)
 	    VALUES
-	        ( '{0}', '{1}', 'TG', {2}, '{3}' )
+	        ( '{0}', '{1}', 'TG', {2}, '{3}', '{4}', '{5}', '{6}' )
 	    ON CONFLICT ON CONSTRAINT idx_users
-	    DO UPDATE SET lang = '{1}';""".format(ref_key, lang, self.uid, datetime.datetime.now()))
+	    DO UPDATE SET lang = '{1}';""".format(ref_key, lang, self.uid, last_name, first_name, username,
+                                              datetime.datetime.now()))
 
         self.dbconnector.execute_insert_query("""
             INSERT INTO test_bot.users_state 
@@ -121,21 +123,22 @@ class Botuser():
             return 1
 
     def getstate(self):
-        status = self.dbconnector.execute_select_query("SELECT user_state from test_bot.users_state WHERE user_id = {}".format(self.uid))
+        status = self.dbconnector.execute_select_query(
+            "SELECT user_state from test_bot.users_state WHERE user_id = {}".format(self.uid))
         if status:
             return status[0]
 
-    def change_user_state (self, user_state):
+    def change_user_state(self, user_state):
         self.dbconnector.execute_insert_query("""
             UPDATE test_bot.users_state SET user_state = '{1}'
             WHERE user_id = {0};
         """.format(self.uid, user_state))
 
-
     def send_main_test_results(self):
         summ = 0
         result = self.dbconnector.execute_select_many_query(
-            "SELECT answer from test_bot.user_answers WHERE user_id = {} AND test_type = 'MAIN_TEST' AND status = 'ACTIVE'".format(self.uid))
+            "SELECT answer from test_bot.user_answers WHERE user_id = {} AND test_type = 'MAIN_TEST' AND status = 'ACTIVE'".format(
+                self.uid))
         for row in result:
             summ += int(row[0])
         if summ <= 2:
@@ -147,7 +150,3 @@ class Botuser():
         else:
             message_index = 'RESULT_MESSAGE_4'
         self.send_message(message_index=message_index)
-
-
-
-
