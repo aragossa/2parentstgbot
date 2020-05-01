@@ -76,10 +76,9 @@ class Botuser():
         INSERT INTO core.users
 	        ( ref_id, lang, interface, user_id, last_name, first_name, username, test_bot_join_date)
 	    VALUES
-	        ( '{0}', '{1}', 'TG', {2}, '{3}', '{4}', '{5}', '{6}' )
+	        ( '{0}', '{1}', 'TG', {2}, '{3}', '{4}', '{5}', current_timestamp )
 	    ON CONFLICT ON CONSTRAINT idx_users
-	    DO UPDATE SET lang = '{1}';""".format(ref_key, lang, self.uid, last_name, first_name, username,
-                                              datetime.datetime.now()))
+	    DO UPDATE SET lang = '{1}';""".format(ref_key, lang, self.uid, last_name, first_name, username))
 
         self.dbconnector.execute_insert_query("""
             INSERT INTO test_bot.users_state 
@@ -87,11 +86,14 @@ class Botuser():
             ON CONFLICT ON CONSTRAINT idx_users_state_user_id
 	        DO NOTHING;""".format(self.uid))
 
-    def join_aggrbot(self):
+    def join_aggrbot(self, last_name, first_name, username, ref_key='Notset', lang='rus' ):
         self.dbconnector.execute_insert_query("""
-        INSERT INTO core.users ( ref_id, lang, interface, id, test_bot_join_date)
-	    VALUES ( 'Notset', 'rus', 'TG', {0}, '{1}');
-            """.format(self.uid, datetime.datetime.now()))
+        INSERT INTO core.users
+	        ( ref_id, lang, interface, user_id, last_name, first_name, username, aggregator_bot_join_date)
+	    VALUES
+	        ( '{0}', '{1}', 'TG', {2}, '{3}', '{4}', '{5}', current_timestamp )
+	    ON CONFLICT ON CONSTRAINT idx_users
+	    DO UPDATE SET aggregator_bot_join_date = current_timestamp;""".format(ref_key, lang, self.uid, last_name, first_name, username))
 
     def save_answer(self, question_num, answer, test_type):
         self.dbconnector.execute_insert_query("""

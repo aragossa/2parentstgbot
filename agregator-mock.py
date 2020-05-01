@@ -22,7 +22,10 @@ bot = telebot.TeleBot(TOKEN, threaded=True)
 def handlestart(m):
     try:
         user = Botuser(uid=m.chat.id, bot=bot)
-        user.join_aggrbot()
+        last_name = m.from_user.last_name
+        first_name = m.from_user.first_name
+        username = m.from_user.username
+        user.join_aggrbot(last_name=last_name, first_name=first_name, username=username, ref_key='Notset', lang='rus' )
         bot.send_message(chat_id=m.chat.id, text='Привет. Чат бот находится в разработке, скоро все будет готово')
     except:
         logging.exception(str(m))
