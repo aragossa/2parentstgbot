@@ -152,3 +152,4 @@ class Botuser():
         else:
             message_index = 'RESULT_MESSAGE_4'
         self.send_message(message_index=message_index)
+        self.bot.send_message(chat_id=self.uid, text='=============================')
