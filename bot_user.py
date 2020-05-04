@@ -126,7 +126,7 @@ class Botuser():
 
     def select_positive_answer(self):
         positive_answers = self.dbconnector.execute_select_query(
-            """SELECT COUNT(answer) FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'MAIN_TEST'""".format(
+            """SELECT COUNT(answer) FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'MAIN_TEST' AND answer = '1'""".format(
                 self.uid))
         if positive_answers:
             return int(positive_answers[0])
@@ -154,6 +154,7 @@ class Botuser():
                 self.uid))
         for row in result:
             summ += int(row[0])
+        print (summ)
         if summ <= 2:
             message_index = 'RESULT_MESSAGE_1'
         elif summ <= 4:
@@ -162,16 +163,14 @@ class Botuser():
             message_index = 'RESULT_MESSAGE_3'
         else:
             message_index = 'RESULT_MESSAGE_4'
-        self.send_message(message_index=message_index)
-        positive_answer = user.select_positive_answer()
+        result_template = self.select_message(message_index=message_index)
+        send_text = ('=============================\n\n')
+        send_text += result_template
+        positive_answer = self.select_positive_answer()
         all_questions = dbconnector.count_questions()
         percentage = int(round((positive_answer/all_questions) * 100, 0))
-        send_percentage = '=============================\nПроцент зависимости = {}%\n============================='.format(
-            percentage)
-        self.bot.send_message(chat_id=self.uid, text=send_percentage)
+        send_text += ('\n\n=============================\n')
+        send_text += self.select_message(message_index='SEND_PERCENTAGE').format(percentage)
+        send_text += ('\n=============================\n')
+        self.bot.send_message(chat_id=self.uid, text=send_text)
 
-
-if __name__ == '__main__':
-    user = Botuser(556047985)
-    result = user.select_positive_answer()
-    print (result)
