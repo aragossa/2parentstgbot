@@ -127,7 +127,6 @@ def test_answer_handler(call):
     try:
         data = call.data.split('_')
         answer = data[1]
-        print (answer)
         next_question_num = int(data[2])
         user = Botuser(uid=call.message.chat.id, bot=bot)
         user.save_answer(question_num=next_question_num - 1, answer=answer, test_type='MAIN_TEST')

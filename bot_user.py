@@ -154,7 +154,6 @@ class Botuser():
                 self.uid))
         for row in result:
             summ += int(row[0])
-        print (summ)
         if summ <= 2:
             message_index = 'RESULT_MESSAGE_1'
         elif summ <= 4:
