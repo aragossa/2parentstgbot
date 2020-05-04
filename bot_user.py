@@ -124,6 +124,16 @@ class Botuser():
         else:
             return 1
 
+    def select_positive_answer(self):
+        positive_answers = self.dbconnector.execute_select_query(
+            """SELECT COUNT(answer) FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'MAIN_TEST'""".format(
+                self.uid))
+        if positive_answers:
+            return int(positive_answers[0])
+        else:
+            return 0
+
+
     def getstate(self):
         status = self.dbconnector.execute_select_query(
             "SELECT user_state from test_bot.users_state WHERE user_id = {}".format(self.uid))
@@ -137,6 +147,7 @@ class Botuser():
         """.format(self.uid, user_state))
 
     def send_main_test_results(self):
+        dbconnector = Dbconnetor()
         summ = 0
         result = self.dbconnector.execute_select_many_query(
             "SELECT answer from test_bot.user_answers WHERE user_id = {} AND test_type = 'MAIN_TEST' AND status = 'ACTIVE'".format(
@@ -152,4 +163,15 @@ class Botuser():
         else:
             message_index = 'RESULT_MESSAGE_4'
         self.send_message(message_index=message_index)
-        self.bot.send_message(chat_id=self.uid, text='=============================')
+        positive_answer = user.select_positive_answer()
+        all_questions = dbconnector.count_questions()
+        percentage = int(round((positive_answer/all_questions) * 100, 0))
+        send_percentage = '=============================\nПроцент зависимости = {}%\n============================='.format(
+            percentage)
+        self.bot.send_message(chat_id=self.uid, text=send_percentage)
+
+
+if __name__ == '__main__':
+    user = Botuser(556047985)
+    result = user.select_positive_answer()
+    print (result)
