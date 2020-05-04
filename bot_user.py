@@ -163,13 +163,13 @@ class Botuser():
         else:
             message_index = 'RESULT_MESSAGE_4'
         result_template = self.select_message(message_index=message_index)
-        send_text = ('=============================\n\n')
-        send_text += result_template
         positive_answer = self.select_positive_answer()
         all_questions = dbconnector.count_questions()
-        percentage = int(round((positive_answer/all_questions) * 100, 0))
-        send_text += ('\n\n=============================\n')
+        percentage = int(round((positive_answer / all_questions) * 100, 0))
+        send_text = ('=============================\n\n')
         send_text += self.select_message(message_index='SEND_PERCENTAGE').format(percentage)
-        send_text += ('\n=============================\n')
+        send_text += ('\n-----------------------------\n')
+        send_text += result_template
+        send_text += ('\n=============================')
         self.bot.send_message(chat_id=self.uid, text=send_text)
 
