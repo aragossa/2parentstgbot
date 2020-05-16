@@ -18,3 +18,14 @@ def question_answers(user, question_num):
     btn2 = types.InlineKeyboardButton(text= no_answer, callback_data='answer_0_{}'.format(next_question_num))
     keyboard.add(btn1, btn2)
     return keyboard
+
+def additional_question_remove_keyboard():
+    keyboard = types.ReplyKeyboardRemove()
+    return keyboard
+
+def additional_question_gender_answers(user):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    male = types.KeyboardButton(user.select_message ('GENDER_MALE'))
+    female = types.KeyboardButton(user.select_message ('GENDER_FEMALE'))
+    keyboard.add(male, female)
+    return keyboard
