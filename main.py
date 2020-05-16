@@ -5,7 +5,6 @@ from telebot import apihelper
 from bot_user import Botuser
 from dbconnector import Dbconnetor
 import starting_helper
-import time
 
 logging.basicConfig(
     filename='errors.log',
@@ -29,25 +28,7 @@ bot = telebot.TeleBot(TOKEN, threaded=True)
 def handlestart(m):
     user = Botuser(uid=m.chat.id, bot=bot)
     try:
-        if user.isauth():
-            max_count_questions = dbconnector.count_questions()
-            max_count_additional_questions = dbconnector.count_additional_questions()
-            question_to_send = user.select_question_number_to_send()
-            additional_question_to_send = user.select_addtional_question_number_to_send()
-            if question_to_send <= max_count_questions:
-                user.send_question(question_num=question_to_send)
-            elif additional_question_to_send <= max_count_additional_questions:
-                user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
-            else:
-                user.send_message('GO_TO_AGGR')
-        else:
-            ref_key = m.text.replace('/start ', '')
-            if ref_key == ('/start'):
-                ref_key=None
-            last_name = m.from_user.last_name
-            first_name = m.from_user.first_name
-            username = m.from_user.username
-            starting_helper.check_status(user=user, ref_key=ref_key, last_name=last_name, first_name=first_name, username=username)
+        starting_helper.stating_handler(bot=bot, user=user, message=m)
     except:
         logging.exception(str(m))
         logging.exception('Got exception on main handler')
@@ -94,28 +75,9 @@ def simpletextmessage(m):
 
 @bot.callback_query_handler(func=lambda call: call.data[:5] == 'lang_')
 def test_answer_handler(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
     try:
-        lang = call.data[5:]
-        user = Botuser(uid=call.message.chat.id, bot=bot)
-        first_name = call.from_user.first_name
-        username = call.from_user.username
-        last_name = call.from_user.last_name
-        user.join_to_bot_users(lang=lang, last_name=last_name, first_name=first_name, username=username)
-        if not user.isauth():
-            send_message = user.select_message('JOIN_MESSAGE')
-        else:
-            send_message = ('ok')
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=send_message)
-        max_count_questions = dbconnector.count_questions()
-        max_count_additional_questions = dbconnector.count_additional_questions()
-        question_to_send = user.select_question_number_to_send()
-        additional_question_to_send = user.select_question_number_to_send()
-        if question_to_send <= max_count_questions:
-            user.send_question(question_num=question_to_send)
-        elif additional_question_to_send <= max_count_additional_questions:
-            user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST')
-        else:
-            user.send_message('GO_TO_AGGR')
+        starting_helper.language_selection_helper(call=call, user=user, bot=bot)
     except:
         logging.exception(str(call))
         logging.exception('Got exception on main handler')
@@ -124,22 +86,9 @@ def test_answer_handler(call):
 
 @bot.callback_query_handler(func=lambda call: call.data[:7] == 'answer_')
 def test_answer_handler(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
     try:
-        data = call.data.split('_')
-        answer = data[1]
-        next_question_num = int(data[2])
-        user = Botuser(uid=call.message.chat.id, bot=bot)
-        user.save_answer(question_num=next_question_num - 1, answer=answer, test_type='MAIN_TEST')
-        max_count_questions = dbconnector.count_questions()
-        edit_text = user.select_question(question_num=next_question_num - 1, test_type='MAIN_TEST')
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=edit_text)
-        if next_question_num <= max_count_questions:
-            user.send_question(question_num=next_question_num)
-        else:
-            user.send_main_test_results()
-            time.sleep(5)
-            user.send_message('ADD_TEST_START')
-            user.send_additional_question(question_num=1, test_type='ADD_TEST')
+        starting_helper.user_answer_handler(call=call, user=user, bot=bot)
     except:
         logging.exception(str(call))
         logging.exception('Got exception on main handler')

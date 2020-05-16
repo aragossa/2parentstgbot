@@ -1,4 +1,4 @@
-import datetime
+import time
 
 from dbconnector import Dbconnetor
 from buttons_helper import select_language_keyboard, question_answers, additional_question_gender_answers, \
@@ -146,30 +146,54 @@ class Botuser():
             WHERE user_id = {0};
         """.format(self.uid, user_state))
 
+    def get_username(self):
+        result = self.dbconnector.execute_select_many_query(
+            "SELECT username, first_name, last_name from core.users WHERE user_id = {}".format(
+                self.uid))
+        if result[0] == 'None':
+            return (result[1] + ' ' + result[2])
+        else:
+            return result[0]
+
+    def send_message_to_all_users(self, text):
+        result = self.dbconnector.execute_select_many_query(
+            "SELECT user_id from core.users WHERE aggregator_bot_join_date IS NOT NULL")
+        username = self.get_username()
+        for user in result:
+
+            send_msg = username + '\n' + text
+            self.bot.send_message (chat_id=user, text=send_msg)
+            time.sleep(1)
+
     def send_main_test_results(self):
-        dbconnector = Dbconnetor()
+        #dbconnector = Dbconnetor()
         summ = 0
         result = self.dbconnector.execute_select_many_query(
             "SELECT answer from test_bot.user_answers WHERE user_id = {} AND test_type = 'MAIN_TEST' AND status = 'ACTIVE'".format(
                 self.uid))
         for row in result:
             summ += int(row[0])
-        if summ <= 2:
-            message_index = 'RESULT_MESSAGE_1'
-        elif summ <= 4:
-            message_index = 'RESULT_MESSAGE_2'
-        elif summ <= 7:
-            message_index = 'RESULT_MESSAGE_3'
-        else:
-            message_index = 'RESULT_MESSAGE_4'
-        result_template = self.select_message(message_index=message_index)
-        positive_answer = self.select_positive_answer()
-        all_questions = dbconnector.count_questions()
-        percentage = int(round((positive_answer / all_questions) * 100, 0))
-        send_text = ('=============================\n\n')
-        send_text += self.select_message(message_index='SEND_PERCENTAGE').format(percentage)
-        send_text += ('\n-----------------------------\n')
-        send_text += result_template
-        send_text += ('\n=============================')
-        self.bot.send_message(chat_id=self.uid, text=send_text)
+
+        sticker = open('imgs/{}percent.webp'.format(summ), 'rb')
+        self.bot.send_sticker(self.uid, sticker)
+
+        # if summ <= 2:
+        #     #message_index = 'RESULT_MESSAGE_1'
+        # elif summ <= 4:
+        #     #message_index = 'RESULT_MESSAGE_2'
+        # elif summ <= 7:
+        #     #message_index = 'RESULT_MESSAGE_3'
+        # else:
+        #     #message_index = 'RESULT_MESSAGE_4'
+
+        # result_template = self.select_message(message_index=message_index)
+        # positive_answer = self.select_positive_answer()
+        # all_questions = dbconnector.count_questions()
+        # percentage = int(round((positive_answer / all_questions) * 100, 0))
+        # send_text = ('=============================\n\n')
+        # send_text += self.select_message(message_index='SEND_PERCENTAGE').format(percentage)
+        # send_text += ('\n-----------------------------\n')
+        # send_text += result_template
+        # send_text += ('\n=============================')
+        # self.bot.send_message(chat_id=self.uid, text=send_text)
 

@@ -1,6 +1,5 @@
 import logging
 import telebot
-from telebot import apihelper
 from dbconnector import Dbconnetor
 from bot_user import Botuser
 
@@ -31,5 +30,16 @@ def handlestart(m):
         logging.exception(str(m))
         logging.exception('Got exception on main handler')
 
+
+
+@bot.message_handler(content_types='text')
+def simpletextmessage(m):
+    user = Botuser(uid=m.chat.id, bot=bot)
+    try:
+        user.send_message_to_all_users(text=m.text)
+    except:
+        logging.exception(str(m))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
 
 bot.polling(none_stop=True)
