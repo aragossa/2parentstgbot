@@ -20,7 +20,6 @@ class Notificator ():
                    FROM test_bot.notifications
                    WHERE notification_status = 'NEW'
                    AND notification_datetime < current_timestamp""")
-            print (len(notifications))
             for notification in notifications:
                 user = Botuser(uid=notification[0], bot=self.bot)
                 notification_type = notification[1]
