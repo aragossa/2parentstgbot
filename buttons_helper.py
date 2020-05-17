@@ -47,3 +47,10 @@ def take_test_again(user):
     btn2 = types.InlineKeyboardButton(text=user.select_message ('NO_ANSWER'), callback_data='onemore_no')
     keyboard.add(btn1, btn2)
     return keyboard
+
+
+def continue_test(user):
+    keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text=user.select_message ('CONTINUE_TEST_BUTTON'), callback_data='continue')
+    keyboard.add(btn1)
+    return keyboard

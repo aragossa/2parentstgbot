@@ -64,5 +64,10 @@ class Dbconnetor ():
 
 if __name__ == '__main__':
     connector=Dbconnetor()
-    result = connector.count_questions()
-    print (result[0])
+    result = connector.execute_select_many_query(
+        """SELECT user_id, message_index
+           FROM test_bot.notifications
+           WHERE notification_status = 'NEW'
+           AND notification_datetime < current_timestamp""")
+
+    print (result)

@@ -3,6 +3,7 @@ import time
 from dbconnector import Dbconnetor
 from buttons_helper import select_language_keyboard, question_answers, additional_question_gender_answers, \
     additional_question_remove_keyboard
+import datetime
 
 
 class Botuser():
@@ -86,20 +87,29 @@ class Botuser():
             ON CONFLICT ON CONSTRAINT idx_users_state_user_id
 	        DO NOTHING;""".format(self.uid))
 
-    def join_aggrbot(self, last_name, first_name, username, ref_key='Notset', lang='rus' ):
+    def join_aggrbot(self, last_name, first_name, username, ref_key='Notset', lang='rus'):
         self.dbconnector.execute_insert_query("""
         INSERT INTO core.users
 	        ( ref_id, lang, interface, user_id, last_name, first_name, username, aggregator_bot_join_date)
 	    VALUES
 	        ( '{0}', '{1}', 'TG', {2}, '{3}', '{4}', '{5}', current_timestamp )
 	    ON CONFLICT ON CONSTRAINT idx_users
-	    DO UPDATE SET aggregator_bot_join_date = current_timestamp;""".format(ref_key, lang, self.uid, last_name, first_name, username))
+	    DO UPDATE SET aggregator_bot_join_date = current_timestamp;""".format(ref_key, lang, self.uid, last_name,
+                                                                              first_name, username))
 
     def save_answer(self, question_num, answer, test_type):
         self.dbconnector.execute_insert_query("""
                 INSERT INTO
                     test_bot.user_answers (user_id, answer, status, question_num, test_type, child_num)
-	            VALUES ({}, '{}', 'ACTIVE', {} , '{}', (SELECT child_num FROM test_bot.users_state WHERE user_id = {}));""".format(self.uid, answer, question_num, test_type, self.uid))
+	            VALUES ({}, '{}', 'ACTIVE', {} , '{}', (SELECT child_num FROM test_bot.users_state WHERE user_id = {}));""".format(
+            self.uid, answer, question_num, test_type, self.uid))
+        input_notification_datetime = datetime.datetime.now() + datetime.timedelta(minutes=30)
+        self.dbconnector.execute_insert_query("""
+                INSERT INTO test_bot.notifications
+	            ( user_id, message_index, notification_datetime, notification_status) VALUES ( {}, 'REMINDE_TEST', '{}', 'NEW' )
+                ON CONFLICT (user_id)
+                DO UPDATE SET notification_datetime = '{}', message_index = 'REMINDE_TEST', notification_status = 'NEW';""".format(
+            self.uid, input_notification_datetime, input_notification_datetime))
 
     def reset_results(self):
         self.dbconnector.execute_insert_query("""
@@ -158,7 +168,6 @@ class Botuser():
         else:
             return 0
 
-
     def getstate(self):
         status = self.dbconnector.execute_select_query(
             "SELECT user_state from test_bot.users_state WHERE user_id = {}".format(self.uid))
@@ -185,9 +194,8 @@ class Botuser():
             "SELECT user_id from core.users WHERE aggregator_bot_join_date IS NOT NULL")
         username = self.get_username()
         for user in result:
-
             send_msg = username + '\n' + text
-            self.bot.send_message (chat_id=user, text=send_msg)
+            self.bot.send_message(chat_id=user, text=send_msg)
             time.sleep(1)
 
     def send_main_test_results(self):
@@ -198,7 +206,7 @@ class Botuser():
         if percentage == 0:
             self.send_message(message_index='AGGR_BOT_GOOD')
         else:
-            user_lang =  self.get_user_lang()
+            user_lang = self.get_user_lang()
             sticker = open('imgs/{}_{}_percent.webp'.format(user_lang, percentage), 'rb')
             self.bot.send_sticker(self.uid, sticker)
             time.sleep(3)
@@ -215,7 +223,6 @@ class Botuser():
         self.dbconnector.execute_insert_query("""
                 UPDATE test_bot.users_state SET child_num = child_num + 1  WHERE user_id = {}""".format(self.uid))
 
-
     def send_invintation_to_aggr_bot(self):
         dbconnector = Dbconnetor()
         positive_answer = self.select_positive_answer()
@@ -226,5 +233,16 @@ class Botuser():
         else:
             self.send_message(message_index='AGGR_BOT_BAD')
 
+    def stop_notification(self):
+        self.dbconnector.execute_insert_query("""
+                UPDATE test_bot.notifications SET notification_status = 'CANCEL' WHERE user_id = {}""".format(self.uid))
 
-
+    def set_thirty_sec_notification(self, notification_type):
+        input_notification_datetime = datetime.datetime.now() + datetime.timedelta(seconds=30)
+        self.dbconnector.execute_insert_query("""
+                UPDATE test_bot.notifications
+                SET
+                    notification_status = 'NEW',
+                    message_index = '{}', 
+                    notification_datetime = '{}'
+                    WHERE user_id = {}""".format(notification_type, input_notification_datetime, self.uid))

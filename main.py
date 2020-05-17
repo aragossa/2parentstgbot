@@ -1,10 +1,13 @@
 import logging
+import threading
+
 import telebot
 from telebot import apihelper
 
 from bot_user import Botuser
 from dbconnector import Dbconnetor
 import starting_helper
+from notificator import Notificator
 
 logging.basicConfig(
     filename='errors.log',
@@ -22,6 +25,7 @@ if use_proxy:
     apihelper.proxy = {'https': 'https://{}'.format(use_proxy)}
 TOKEN = dbconnector.get_config_parameter('api_token', 'test_bot')
 bot = telebot.TeleBot(TOKEN, threaded=True)
+notificator = Notificator(bot=bot)
 
 
 @bot.message_handler(commands=['start'])
@@ -115,6 +119,21 @@ def next_step_selection(call):
         logging.exception(str(call))
         logging.exception('Got exception on main handler')
         user.send_message(message_index="ERROR_MESSAGE")
+
+
+@bot.callback_query_handler(func=lambda call: call.data[:8] == 'continue')
+def next_step_selection(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
+    try:
+        starting_helper.send_continue_test(user=user)
+    except:
+        logging.exception(str(call))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
+
+
+th = threading.Thread(target=notificator.get_active_notifications, args=())
+th.start()
 
 
 bot.polling(none_stop=True)

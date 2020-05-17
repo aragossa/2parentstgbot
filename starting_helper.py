@@ -7,12 +7,14 @@ def stating_handler(bot, user, message):
     if user.get_user_lang():
         dbconnector = Dbconnetor()
         max_count_questions = dbconnector.count_questions()
-        max_count_additional_questions = dbconnector.count_questions()
+        max_count_additional_questions = dbconnector.count_additional_questions()
         question_to_send = user.select_question_number_to_send()
         additional_question_to_send = user.select_addtional_question_number_to_send()
         if question_to_send <= max_count_questions:
             user.send_question(question_num=question_to_send)
         elif additional_question_to_send <= max_count_additional_questions:
+            print (additional_question_to_send)
+            print (max_count_additional_questions)
             user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
         else:
             user.send_invintation_to_aggr_bot()
@@ -73,12 +75,13 @@ def text_message_handler (bot, user, input_value):
             if question_to_send <= max_count_additional_questions:
                 user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST')
             else:
+                user.stop_notification()
                 user.change_user_state('')
                 user.send_main_test_results()
                 time.sleep(3)
-                time.sleep(3)
                 keyboard = take_test_again(user=user)
                 send_text = user.select_message('ONE_MORE_TEST')
+                user.set_thirty_sec_notification(notification_type='SEND_AGGR')
                 bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
 
 
@@ -117,6 +120,7 @@ def user_answer_handler (call, user, bot):
     if next_question_num <= max_count_questions:
         user.send_question(question_num=next_question_num)
     else:
+        user.set_thirty_sec_notification(notification_type='SEND_RESULT')
         send_text = user.select_message('ADD_TEST_START')
         keyboard = select_next_step(user)
         bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
@@ -128,6 +132,7 @@ def main_test_complite_handler(call, user, bot):
     if user_selection == 'result':
         user.send_main_test_results()
         time.sleep(3)
+        user.set_thirty_sec_notification(notification_type='SEND_AGGR')
         bot.send_message(chat_id=user.uid, text=user.select_message('ONE_MORE_TEST'), reply_markup=take_test_again(user=user))
     elif user_selection == 'questions':
         user.send_additional_question(question_num=1, test_type='ADD_TEST')
@@ -142,6 +147,17 @@ def one_more_test_handler(call, user, bot):
         user.send_question(question_num=1)
     elif user_selection == 'no':
         user.send_invintation_to_aggr_bot()
+
+
+def send_continue_test(user):
+    max_count_questions = user.dbconnector.count_questions()
+    max_count_additional_questions = user.dbconnector.count_additional_questions()
+    question_to_send = user.select_question_number_to_send()
+    additional_question_to_send = user.select_addtional_question_number_to_send()
+    if question_to_send <= max_count_questions:
+        user.send_question(question_num=question_to_send)
+    elif additional_question_to_send <= max_count_additional_questions:
+        user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
 
 
 
