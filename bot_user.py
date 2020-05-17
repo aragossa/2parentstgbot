@@ -12,7 +12,7 @@ class Botuser():
         self.bot = bot
         self.dbconnector = Dbconnetor()
 
-    def isauth(self):
+    def get_user_lang(self):
         lang = self.dbconnector.execute_select_query(
             "SELECT lang from core.users WHERE users.user_id = {}".format(self.uid))
         if lang:
@@ -28,7 +28,7 @@ class Botuser():
         pass
 
     def select_message(self, message_index):
-        lang = self.isauth()
+        lang = self.get_user_lang()
         if not lang:
             lang = 'rus'
         result = self.dbconnector.execute_select_query("""SELECT text FROM test_bot.messages
@@ -47,7 +47,7 @@ class Botuser():
         self.bot.send_message(chat_id=self.uid, text=text)
 
     def select_question(self, question_num, test_type):
-        lang = self.isauth()
+        lang = self.get_user_lang()
         if not lang:
             lang = 'rus'
         result = self.dbconnector.execute_select_query("""SELECT text FROM test_bot.test_questions 
@@ -82,7 +82,7 @@ class Botuser():
 
         self.dbconnector.execute_insert_query("""
             INSERT INTO test_bot.users_state 
-                ( user_id ) VALUES ({0})
+                ( user_id, child_num ) VALUES ({0}, 1)
             ON CONFLICT ON CONSTRAINT idx_users_state_user_id
 	        DO NOTHING;""".format(self.uid))
 
@@ -98,8 +98,8 @@ class Botuser():
     def save_answer(self, question_num, answer, test_type):
         self.dbconnector.execute_insert_query("""
                 INSERT INTO
-                    test_bot.user_answers (user_id, answer, status, question_num, test_type)
-	            VALUES ({}, '{}', 'ACTIVE', {} , '{}');""".format(self.uid, answer, question_num, test_type))
+                    test_bot.user_answers (user_id, answer, status, question_num, test_type, child_num)
+	            VALUES ({}, '{}', 'ACTIVE', {} , '{}', (SELECT child_num FROM test_bot.users_state WHERE user_id = {}));""".format(self.uid, answer, question_num, test_type, self.uid))
 
     def reset_results(self):
         self.dbconnector.execute_insert_query("""
@@ -108,8 +108,17 @@ class Botuser():
 
     def select_question_number_to_send(self):
         max_count = self.dbconnector.execute_select_query(
-            """SELECT question_num FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'MAIN_TEST' ORDER BY question_num DESC LIMIT 1""".format(
-                self.uid))
+            """SELECT
+                    question_num
+               FROM
+                    test_bot.user_answers
+               WHERE
+                    user_id = {}
+               AND status = 'ACTIVE'
+               AND test_type = 'MAIN_TEST'
+               AND child_num = (SELECT child_num FROM test_bot.users_state WHERE user_id = {})
+               ORDER BY question_num DESC LIMIT 1""".format(
+                self.uid, self.uid))
         if max_count:
             return int(max_count[0]) + 1
         else:
@@ -117,8 +126,16 @@ class Botuser():
 
     def select_addtional_question_number_to_send(self):
         max_count = self.dbconnector.execute_select_query(
-            """SELECT question_num FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'ADD_TEST' ORDER BY question_num DESC LIMIT 1""".format(
-                self.uid))
+            """SELECT
+                    question_num
+                FROM
+                    test_bot.user_answers
+                WHERE user_id = {}
+                AND status = 'ACTIVE'
+                AND test_type = 'ADD_TEST'
+                AND child_num = (SELECT child_num FROM test_bot.users_state WHERE user_id = {})
+                ORDER BY question_num DESC LIMIT 1""".format(
+                self.uid, self.uid))
         if max_count:
             return int(max_count[0]) + 1
         else:
@@ -126,8 +143,16 @@ class Botuser():
 
     def select_positive_answer(self):
         positive_answers = self.dbconnector.execute_select_query(
-            """SELECT COUNT(answer) FROM test_bot.user_answers WHERE user_id = {} AND status = 'ACTIVE' AND test_type = 'MAIN_TEST' AND answer = '1'""".format(
-                self.uid))
+            """SELECT
+                    COUNT(answer)
+               FROM
+                    test_bot.user_answers
+               WHERE user_id = {}
+               AND status = 'ACTIVE'
+               AND test_type = 'MAIN_TEST'
+               AND child_num = (SELECT child_num FROM test_bot.users_state WHERE user_id = {})
+               AND answer = '1'""".format(
+                self.uid, self.uid))
         if positive_answers:
             return int(positive_answers[0])
         else:
@@ -166,34 +191,40 @@ class Botuser():
             time.sleep(1)
 
     def send_main_test_results(self):
-        #dbconnector = Dbconnetor()
-        summ = 0
-        result = self.dbconnector.execute_select_many_query(
-            "SELECT answer from test_bot.user_answers WHERE user_id = {} AND test_type = 'MAIN_TEST' AND status = 'ACTIVE'".format(
-                self.uid))
-        for row in result:
-            summ += int(row[0])
+        dbconnector = Dbconnetor()
+        positive_answer = self.select_positive_answer()
+        all_questions = dbconnector.count_questions()
+        percentage = int(round((positive_answer / all_questions) * 100, 0))
+        if percentage == 0:
+            self.send_message(message_index='AGGR_BOT_GOOD')
+        else:
+            user_lang =  self.get_user_lang()
+            sticker = open('imgs/{}_{}_percent.webp'.format(user_lang, percentage), 'rb')
+            self.bot.send_sticker(self.uid, sticker)
+            time.sleep(3)
+            if positive_answer <= 2:
+                self.send_message(message_index='RESULT_MESSAGE_1')
+            elif positive_answer <= 4:
+                self.send_message(message_index='RESULT_MESSAGE_2')
+            elif positive_answer <= 7:
+                self.send_message(message_index='RESULT_MESSAGE_3')
+            else:
+                self.send_message(message_index='RESULT_MESSAGE_4')
 
-        sticker = open('imgs/{}percent.webp'.format(summ), 'rb')
-        self.bot.send_sticker(self.uid, sticker)
+    def add_child(self):
+        self.dbconnector.execute_insert_query("""
+                UPDATE test_bot.users_state SET child_num = child_num + 1  WHERE user_id = {}""".format(self.uid))
 
-        # if summ <= 2:
-        #     #message_index = 'RESULT_MESSAGE_1'
-        # elif summ <= 4:
-        #     #message_index = 'RESULT_MESSAGE_2'
-        # elif summ <= 7:
-        #     #message_index = 'RESULT_MESSAGE_3'
-        # else:
-        #     #message_index = 'RESULT_MESSAGE_4'
 
-        # result_template = self.select_message(message_index=message_index)
-        # positive_answer = self.select_positive_answer()
-        # all_questions = dbconnector.count_questions()
-        # percentage = int(round((positive_answer / all_questions) * 100, 0))
-        # send_text = ('=============================\n\n')
-        # send_text += self.select_message(message_index='SEND_PERCENTAGE').format(percentage)
-        # send_text += ('\n-----------------------------\n')
-        # send_text += result_template
-        # send_text += ('\n=============================')
-        # self.bot.send_message(chat_id=self.uid, text=send_text)
+    def send_invintation_to_aggr_bot(self):
+        dbconnector = Dbconnetor()
+        positive_answer = self.select_positive_answer()
+        all_questions = dbconnector.count_questions()
+        percentage = int(round((positive_answer / all_questions) * 100, 0))
+        if percentage <= 50:
+            self.send_message(message_index='AGGR_BOT_GOOD')
+        else:
+            self.send_message(message_index='AGGR_BOT_BAD')
+
+
 

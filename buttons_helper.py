@@ -19,13 +19,31 @@ def question_answers(user, question_num):
     keyboard.add(btn1, btn2)
     return keyboard
 
+
 def additional_question_remove_keyboard():
     keyboard = types.ReplyKeyboardRemove()
     return keyboard
+
 
 def additional_question_gender_answers(user):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     male = types.KeyboardButton(user.select_message ('GENDER_MALE'))
     female = types.KeyboardButton(user.select_message ('GENDER_FEMALE'))
     keyboard.add(male, female)
+    return keyboard
+
+
+def select_next_step(user):
+    keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text=user.select_message ('SEND_RESULT'), callback_data='nextstep_result')
+    btn2 = types.InlineKeyboardButton(text=user.select_message ('ANSWER_QUESTIONS'), callback_data='nextstep_questions')
+    keyboard.add(btn1, btn2)
+    return keyboard
+
+
+def take_test_again(user):
+    keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text=user.select_message ('YES_ANSWER'), callback_data='onemore_yes')
+    btn2 = types.InlineKeyboardButton(text=user.select_message ('NO_ANSWER'), callback_data='onemore_no')
+    keyboard.add(btn1, btn2)
     return keyboard

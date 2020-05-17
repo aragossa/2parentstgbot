@@ -1,8 +1,10 @@
+from buttons_helper import select_next_step, take_test_again
 from dbconnector import Dbconnetor
 import time
 
+
 def stating_handler(bot, user, message):
-    if user.isauth():
+    if user.get_user_lang():
         dbconnector = Dbconnetor()
         max_count_questions = dbconnector.count_questions()
         max_count_additional_questions = dbconnector.count_questions()
@@ -13,7 +15,7 @@ def stating_handler(bot, user, message):
         elif additional_question_to_send <= max_count_additional_questions:
             user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
         else:
-            user.send_message('GO_TO_AGGR')
+            user.send_invintation_to_aggr_bot()
     else:
         ref_key = message.text.replace('/start ', '')
         if ref_key == ('/start'):
@@ -23,25 +25,29 @@ def stating_handler(bot, user, message):
         username = message.from_user.username
         check_status(user=user, ref_key=ref_key, last_name=last_name, first_name=first_name, username=username)
 
+
 def check_status(user, ref_key, last_name, first_name, username):
     dbconnector = Dbconnetor()
-    if not user.isauth():
+    if not user.get_user_lang():
         lang = user.check_status_new_user(ref_key)
         if lang:
             """ Добавление пользователя в базу с полученным языком """
             """ Отправка первого вопроса """
             user.join_to_bot_users(lang=lang, ref_key=ref_key, last_name=last_name, first_name=first_name, username=username)
-            user.send_message(message_index='JOIN_MESSAGE')
             max_count_questions = dbconnector.count_questions()
             max_count_additional_questions = dbconnector.count_additional_questions()
             question_to_send = user.select_question_number_to_send()
             additional_question_to_send = user.select_addtional_question_number_to_send()
-            if question_to_send <= max_count_questions:
+            if question_to_send == 1:
+                user.send_message(message_index='HELLO_MESSAGE')
+                time.sleep(3)
+                user.send_question(question_num=question_to_send)
+            elif question_to_send <= max_count_questions:
                 user.send_question(question_num=question_to_send)
             elif additional_question_to_send <= max_count_additional_questions:
                 user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
             else:
-                user.send_message(message_index='GO_TO_AGGR')
+                user.send_invintation_to_aggr_bot()
 
         else:
             user.send_select_lang_message()
@@ -52,7 +58,8 @@ def check_status(user, ref_key, last_name, first_name, username):
 
             user.send_question(question_num=question_to_send)
         else:
-            user.send_message(message_index='GO_TO_AGGR')
+            user.send_invintation_to_aggr_bot()
+
 
 def text_message_handler (bot, user, input_value):
     user_state = user.getstate()
@@ -67,13 +74,14 @@ def text_message_handler (bot, user, input_value):
                 user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST')
             else:
                 user.change_user_state('')
-                user.send_message('GO_TO_AGGR')
-        else:
-            user.change_user_state('')
-            user.send_message(message_index='HELLO_MESSAGE')
+                user.send_main_test_results()
+                time.sleep(3)
+                time.sleep(3)
+                keyboard = take_test_again(user=user)
+                send_text = user.select_message('ONE_MORE_TEST')
+                bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
 
-    else:
-        user.send_message(message_index='HELLO_MESSAGE')
+
 
 def language_selection_helper (call, user, bot):
     dbconnector = Dbconnetor()
@@ -82,21 +90,20 @@ def language_selection_helper (call, user, bot):
     username = call.from_user.username
     last_name = call.from_user.last_name
     user.join_to_bot_users(lang=lang, last_name=last_name, first_name=first_name, username=username)
-    if not user.isauth():
-        send_message = user.select_message('JOIN_MESSAGE')
-    else:
-        send_message = ('ok')
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=send_message)
     max_count_questions = dbconnector.count_questions()
     max_count_additional_questions = dbconnector.count_additional_questions()
     question_to_send = user.select_question_number_to_send()
     additional_question_to_send = user.select_question_number_to_send()
-    if question_to_send <= max_count_questions:
+    if question_to_send <= 1:
+        send_message = user.select_message('HELLO_MESSAGE')
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=send_message)
+        time.sleep(3)
+        user.send_question(question_num=question_to_send)
+    elif question_to_send <= max_count_questions:
         user.send_question(question_num=question_to_send)
     elif additional_question_to_send <= max_count_additional_questions:
         user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST')
-    else:
-        user.send_message('GO_TO_AGGR')
+
 
 def user_answer_handler (call, user, bot):
     dbconnector = Dbconnetor()
@@ -110,7 +117,31 @@ def user_answer_handler (call, user, bot):
     if next_question_num <= max_count_questions:
         user.send_question(question_num=next_question_num)
     else:
+        send_text = user.select_message('ADD_TEST_START')
+        keyboard = select_next_step(user)
+        bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
+
+
+def main_test_complite_handler(call, user, bot):
+    user_selection = call.data.split('_')[1]
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
+    if user_selection == 'result':
         user.send_main_test_results()
-        time.sleep(5)
-        user.send_message('ADD_TEST_START')
+        time.sleep(3)
+        bot.send_message(chat_id=user.uid, text=user.select_message('ONE_MORE_TEST'), reply_markup=take_test_again(user=user))
+    elif user_selection == 'questions':
         user.send_additional_question(question_num=1, test_type='ADD_TEST')
+
+
+def one_more_test_handler(call, user, bot):
+    user_selection = call.data.split('_')[1]
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
+    if user_selection == 'yes':
+        user.add_child()
+        time.sleep(3)
+        user.send_question(question_num=1)
+    elif user_selection == 'no':
+        user.send_invintation_to_aggr_bot()
+
+
+

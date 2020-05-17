@@ -40,7 +40,7 @@ def handlestart(m):
     user = Botuser(uid=m.chat.id, bot=bot)
     try:
         user.reset_results()
-        if user.isauth():
+        if user.get_user_lang():
             question_to_send = user.select_question_number_to_send()
             user.send_question(question_num=question_to_send)
         else:
@@ -89,6 +89,28 @@ def test_answer_handler(call):
     user = Botuser(uid=call.message.chat.id, bot=bot)
     try:
         starting_helper.user_answer_handler(call=call, user=user, bot=bot)
+    except:
+        logging.exception(str(call))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
+
+
+@bot.callback_query_handler(func=lambda call: call.data[:9] == 'nextstep_')
+def next_step_selection(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
+    try:
+        starting_helper.main_test_complite_handler(call=call, user=user, bot=bot)
+    except:
+        logging.exception(str(call))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
+
+
+@bot.callback_query_handler(func=lambda call: call.data[:8] == 'onemore_')
+def next_step_selection(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
+    try:
+        starting_helper.one_more_test_handler(call=call, user=user, bot=bot)
     except:
         logging.exception(str(call))
         logging.exception('Got exception on main handler')
