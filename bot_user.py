@@ -256,6 +256,8 @@ class Botuser():
                 UPDATE test_bot.notifications SET notification_status = 'CANCEL' WHERE user_id = {}""".format(self.uid))
 
     def set_thirty_sec_notification(self, notification_type):
+        sticker = open('imgs/delimiter_bold.webp', 'rb')
+        self.bot.send_sticker(self.uid, sticker)
         input_notification_datetime = datetime.datetime.now() + datetime.timedelta(seconds=30)
         self.dbconnector.execute_insert_query("""
                 UPDATE test_bot.notifications
