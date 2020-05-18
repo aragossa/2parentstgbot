@@ -115,6 +115,9 @@ class Botuser():
         self.dbconnector.execute_insert_query("""
                         UPDATE test_bot.user_answers SET status = 'DELETED' WHERE user_id = {};
                             """.format(self.uid))
+        self.dbconnector.execute_insert_query("""
+                        UPDATE test_bot.test_stat SET test_status = 'DELETED' WHERE user_id = {};
+                            """.format(self.uid))
 
     def select_question_number_to_send(self):
         max_count = self.dbconnector.execute_select_query(
@@ -231,7 +234,22 @@ class Botuser():
         if percentage <= 50:
             self.send_message(message_index='AGGR_BOT_GOOD')
         else:
-            self.send_message(message_index='AGGR_BOT_BAD')
+            stats = self.get_stats()
+            send_text = (self.select_message('AGGR_BOT_BAD').format(stats))
+            self.bot.send_message(chat_id=self.uid, text=send_text)
+
+    def save_stats(self, test_result):
+        self.dbconnector.execute_insert_query("""
+                INSERT INTO test_bot.test_stat (user_id, test_result, child_num)
+                VALUES ({}, {}, (SELECT child_num FROM test_bot.users_state WHERE user_id = {}))""".format(self.uid, test_result, self.uid))
+
+    def get_stats(self):
+        all_answer = self.dbconnector.execute_select_query(
+            "SELECT count(user_id) from test_bot.test_stat")
+        bad_results = self.dbconnector.execute_select_query(
+            "SELECT count(user_id) from test_bot.test_stat WHERE test_result = 1")
+        percentage = round(bad_results[0]/all_answer[0] * 100, 0)
+        return percentage
 
     def stop_notification(self):
         self.dbconnector.execute_insert_query("""

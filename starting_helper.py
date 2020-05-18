@@ -120,6 +120,12 @@ def user_answer_handler (call, user, bot):
     if next_question_num <= max_count_questions:
         user.send_question(question_num=next_question_num)
     else:
+        positive_answer = user.select_positive_answer()
+        all_questions = dbconnector.count_questions()
+        if positive_answer/all_questions >= 0.5:
+            user.save_stats(1)
+        else:
+            user.save_stats(0)
         user.set_thirty_sec_notification(notification_type='SEND_RESULT')
         send_text = user.select_message('ADD_TEST_START')
         keyboard = select_next_step(user)
@@ -139,6 +145,7 @@ def main_test_complite_handler(call, user, bot):
 
 
 def one_more_test_handler(call, user, bot):
+    user.stop_notification()
     user_selection = call.data.split('_')[1]
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=call.message.text)
     if user_selection == 'yes':
@@ -150,6 +157,7 @@ def one_more_test_handler(call, user, bot):
 
 
 def send_continue_test(user):
+    user.stop_notification()
     max_count_questions = user.dbconnector.count_questions()
     max_count_additional_questions = user.dbconnector.count_additional_questions()
     question_to_send = user.select_question_number_to_send()
