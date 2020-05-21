@@ -2,7 +2,7 @@ import time
 
 from dbconnector import Dbconnetor
 from buttons_helper import select_language_keyboard, question_answers, additional_question_gender_answers, \
-    additional_question_remove_keyboard
+    additional_question_remove_keyboard, skip_game_question
 import datetime
 
 
@@ -36,7 +36,7 @@ class Botuser():
                                                        WHERE lang = '{0}'
                                                        AND message_index = '{1}'""".format(lang, message_index))
         if result:
-            return result[0]
+            return str(result[0])
 
     def send_select_lang_message(self):
         text = self.select_message(message_index='START_MESSAGE')
@@ -67,6 +67,8 @@ class Botuser():
         text = self.select_question(question_num=question_num, test_type=test_type)
         if question_num == 2:
             keyboard = additional_question_gender_answers(user=self)
+        elif question_num == 4:
+            keyboard = skip_game_question(user=self)
         else:
             keyboard = additional_question_remove_keyboard()
         self.change_user_state('{}_{}'.format(test_type, question_num))
@@ -213,14 +215,9 @@ class Botuser():
             sticker = open('imgs/{}_{}_percent.webp'.format(user_lang, percentage), 'rb')
             self.bot.send_sticker(self.uid, sticker)
             time.sleep(3)
-            if positive_answer <= 2:
-                self.send_message(message_index='RESULT_MESSAGE_1')
-            elif positive_answer <= 4:
-                self.send_message(message_index='RESULT_MESSAGE_2')
-            elif positive_answer <= 7:
-                self.send_message(message_index='RESULT_MESSAGE_3')
-            else:
-                self.send_message(message_index='RESULT_MESSAGE_4')
+            percentage = self.get_stats(percentage)
+            send_message = self.select_message(message_index='RESULT_MESSAGE_1').format(percentage)
+            self.bot.send_message(chat_id=self.uid, text=send_message)
 
     def add_child(self):
         self.dbconnector.execute_insert_query("""
@@ -231,10 +228,10 @@ class Botuser():
         positive_answer = self.select_positive_answer()
         all_questions = dbconnector.count_questions()
         percentage = int(round((positive_answer / all_questions) * 100, 0))
-        if percentage <= 50:
+        if percentage <= 22:
             self.send_message(message_index='AGGR_BOT_GOOD')
         else:
-            stats = self.get_stats()
+            stats = self.get_stats(percentage)
             send_text = (self.select_message('AGGR_BOT_BAD').format(stats))
             self.bot.send_message(chat_id=self.uid, text=send_text)
 
@@ -243,11 +240,15 @@ class Botuser():
                 INSERT INTO test_bot.test_stat (user_id, test_result, child_num)
                 VALUES ({}, {}, (SELECT child_num FROM test_bot.users_state WHERE user_id = {}))""".format(self.uid, test_result, self.uid))
 
-    def get_stats(self):
+    def get_stats(self, percentage):
+        if percentage <= 77:
+            test_result = 1
+        else:
+            test_result = 2
         all_answer = self.dbconnector.execute_select_query(
             "SELECT count(user_id) from test_bot.test_stat")
         bad_results = self.dbconnector.execute_select_query(
-            "SELECT count(user_id) from test_bot.test_stat WHERE test_result = 1")
+            "SELECT count(user_id) from test_bot.test_stat WHERE test_result = {}".format(test_result))
         percentage = round(bad_results[0]/all_answer[0] * 100, 0)
         return percentage
 

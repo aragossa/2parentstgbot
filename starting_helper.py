@@ -1,4 +1,4 @@
-from buttons_helper import select_next_step, take_test_again
+from buttons_helper import select_next_step, take_test_again, skip_game_question, additional_question_remove_keyboard
 from dbconnector import Dbconnetor
 import time
 
@@ -13,9 +13,12 @@ def stating_handler(bot, user, message):
         if question_to_send <= max_count_questions:
             user.send_question(question_num=question_to_send)
         elif additional_question_to_send <= max_count_additional_questions:
-            print (additional_question_to_send)
-            print (max_count_additional_questions)
-            user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
+            if question_to_send == 3:
+                keyboard = skip_game_question(user=user)
+                user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST', reply_markup=keyboard)
+            else:
+                keyboard = additional_question_remove_keyboard()
+                user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST',reply_markup=keyboard)
         else:
             user.send_invintation_to_aggr_bot()
     else:
@@ -41,7 +44,10 @@ def check_status(user, ref_key, last_name, first_name, username):
             question_to_send = user.select_question_number_to_send()
             additional_question_to_send = user.select_addtional_question_number_to_send()
             if question_to_send == 1:
-                user.send_message(message_index='HELLO_MESSAGE')
+                if ref_key == None:
+                    user.send_message(message_index='HELLO_MESSAGE')
+                else:
+                    user.send_message(message_index='HELLO_MESSAGE_NOURL')
                 time.sleep(3)
                 user.send_question(question_num=question_to_send)
             elif question_to_send <= max_count_questions:
@@ -77,11 +83,15 @@ def text_message_handler (bot, user, input_value):
             else:
                 user.stop_notification()
                 user.change_user_state('')
+                send_thnx_message_text = user.select_message('THANKS_MESSAGE')
+                remove_keyboard = additional_question_remove_keyboard()
+                user.bot.send_message(chat_id=user.uid, text=send_thnx_message_text, reply_markup=remove_keyboard)
                 user.send_main_test_results()
                 time.sleep(3)
+                user.send_invintation_to_aggr_bot()
                 keyboard = take_test_again(user=user)
-                send_text = user.select_message('ONE_MORE_TEST')
-                user.set_thirty_sec_notification(notification_type='SEND_AGGR')
+                send_text = user.select_message('CONTINUE_TEST')
+                #user.set_thirty_sec_notification(notification_type='SEND_AGGR')
                 bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
 
 
@@ -122,11 +132,16 @@ def user_answer_handler (call, user, bot):
     else:
         positive_answer = user.select_positive_answer()
         all_questions = dbconnector.count_questions()
-        if positive_answer/all_questions >= 0.5:
-            user.save_stats(1)
-        else:
+        if positive_answer/all_questions <= 0.22:
             user.save_stats(0)
-        user.set_thirty_sec_notification(notification_type='SEND_RESULT')
+        elif positive_answer/all_questions <= 0.78:
+            user.save_stats(1)
+        elif positive_answer/all_questions > 0.78:
+            user.save_stats(2)
+        #user.set_thirty_sec_notification(notification_type='SEND_RESULT')
+
+        user.send_main_test_results()
+        time.sleep(3)
         send_text = user.select_message('ADD_TEST_START')
         keyboard = select_next_step(user)
         bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
@@ -138,7 +153,7 @@ def main_test_complite_handler(call, user, bot):
     if user_selection == 'result':
         user.send_main_test_results()
         time.sleep(3)
-        user.set_thirty_sec_notification(notification_type='SEND_AGGR')
+        #user.set_thirty_sec_notification(notification_type='SEND_AGGR')
         bot.send_message(chat_id=user.uid, text=user.select_message('ONE_MORE_TEST'), reply_markup=take_test_again(user=user))
     elif user_selection == 'questions':
         user.send_additional_question(question_num=1, test_type='ADD_TEST')

@@ -35,9 +35,10 @@ def additional_question_gender_answers(user):
 
 def select_next_step(user):
     keyboard = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton(text=user.select_message ('SEND_RESULT'), callback_data='nextstep_result')
+    #btn1 = types.InlineKeyboardButton(text=user.select_message ('SEND_RESULT'), callback_data='nextstep_result')
     btn2 = types.InlineKeyboardButton(text=user.select_message ('ANSWER_QUESTIONS'), callback_data='nextstep_questions')
-    keyboard.add(btn1, btn2)
+    btn3 = types.InlineKeyboardButton(text=user.select_message ('ONE_MORE_TIME'), callback_data='onemore_yes')
+    keyboard.add(btn2, btn3)
     return keyboard
 
 
@@ -52,5 +53,12 @@ def take_test_again(user):
 def continue_test(user):
     keyboard = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton(text=user.select_message ('CONTINUE_TEST_BUTTON'), callback_data='continue')
+    keyboard.add(btn1)
+    return keyboard
+
+
+def skip_game_question(user):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton(text=user.select_message ('SKIP_QUESTION'))
     keyboard.add(btn1)
     return keyboard
