@@ -26,19 +26,31 @@ def additional_question_remove_keyboard():
 
 
 def additional_question_gender_answers(user):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    male = types.KeyboardButton(user.select_message ('GENDER_MALE'))
-    female = types.KeyboardButton(user.select_message ('GENDER_FEMALE'))
+    # keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # male = types.KeyboardButton(user.select_message ('GENDER_MALE'))
+    # female = types.KeyboardButton(user.select_message ('GENDER_FEMALE'))
+    male = types.InlineKeyboardButton(text=user.select_message ('GENDER_MALE'), callback_data='add_quest_male')
+    female = types.InlineKeyboardButton(text=user.select_message ('GENDER_FEMALE'), callback_data='add_quest_female')
+    keyboard = types.InlineKeyboardMarkup()
     keyboard.add(male, female)
+    return keyboard
+
+def skip_game_question(user):
+    #keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(text=user.select_message ('SKIP_QUESTION'), callback_data='add_quest_unknown')
+    keyboard.add(btn1)
     return keyboard
 
 
 def select_next_step(user):
     keyboard = types.InlineKeyboardMarkup()
-    #btn1 = types.InlineKeyboardButton(text=user.select_message ('SEND_RESULT'), callback_data='nextstep_result')
+    btn1 = types.InlineKeyboardButton(text=user.select_message ('GO_TO_AGGR'), url="t.me/ToParents_bot")
+    keyboard.add(btn1)
     btn2 = types.InlineKeyboardButton(text=user.select_message ('ANSWER_QUESTIONS'), callback_data='nextstep_questions')
+    keyboard.add(btn2)
     btn3 = types.InlineKeyboardButton(text=user.select_message ('ONE_MORE_TIME'), callback_data='onemore_yes')
-    keyboard.add(btn2, btn3)
+    keyboard.add(btn3)
     return keyboard
 
 
@@ -57,8 +69,3 @@ def continue_test(user):
     return keyboard
 
 
-def skip_game_question(user):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton(text=user.select_message ('SKIP_QUESTION'))
-    keyboard.add(btn1)
-    return keyboard

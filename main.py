@@ -110,6 +110,17 @@ def next_step_selection(call):
         user.send_message(message_index="ERROR_MESSAGE")
 
 
+@bot.callback_query_handler(func=lambda call: call.data[:10] == 'add_quest_')
+def next_step_selection(call):
+    user = Botuser(uid=call.message.chat.id, bot=bot)
+    try:
+        starting_helper.additional_question_inline_handler(call=call, user=user, bot=bot)
+    except:
+        logging.exception(str(call))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
+
+
 @bot.callback_query_handler(func=lambda call: call.data[:8] == 'onemore_')
 def next_step_selection(call):
     user = Botuser(uid=call.message.chat.id, bot=bot)

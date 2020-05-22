@@ -13,7 +13,7 @@ class Notificator ():
 
     def get_active_notifications(self):
         while True:
-            time.sleep(5)
+
             self.dbconnector.execute_insert_query("SET TIME ZONE 'Europe/Moscow';")
             notifications = self.dbconnector.execute_select_many_query(
                 """SELECT user_id, message_index
@@ -34,4 +34,5 @@ class Notificator ():
                     user.send_invintation_to_aggr_bot()
                 elif notification_type == 'SEND_AGGR':
                     user.send_invintation_to_aggr_bot()
+            time.sleep(5)
 

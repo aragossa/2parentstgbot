@@ -34,7 +34,7 @@ def handlestart(m):
         keyboard.add(btn1)
         bot.send_message(chat_id=m.chat.id, text="""Добро пожаловать в Бот/Канал 2Parents
 
-2Parents это сообщестов активных родителей и одновременно полигон для создания продукта, который позволит интерес ребенка к игре направить на достижения в реальной жизни.
+2Parents это сообщестов активных родителей и одновременно полигон для создания продукта, который позволит перенаправить интерес ребенка от игр к реальной жизни. 
 
 Функционал бот/канала:
 - блога сообщества
@@ -42,7 +42,10 @@ def handlestart(m):
 - возможность делиться кейсами борьбы с игрозависимостью
 - в перспективе - первая версия продукта
 
-Поехали!""", reply_markup=keyboard)
+К этому моменту проведена определенная работа, о которой мы расскажем в нескольких постах.
+
+Мы - это администраторы сообщества - Александр Зеленин и Станислав Ефремов, два отца двух семейств, которые решили дать отпор игровой зависимости максимально экологичным способом.
+""", reply_markup=keyboard)
     except:
         logging.exception(str(m))
         logging.exception('Got exception on main handler')
@@ -59,7 +62,7 @@ def simpletextmessage(m):
             hideBoard = types.ReplyKeyboardRemove()
             bot.send_message(chat_id=m.chat.id, text='Введите сообщение', reply_markup=hideBoard)
         elif states.get(m.chat.id) == 'send_to_admin':
-            admins = [556047985]
+            admins = [556047985, 121013858, 2213]
             send_message = ('From user_id: {}\nMessage:{}'.format(m.chat.id, m.text))
             keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
             btn1 = types.KeyboardButton('Написать администраторам')

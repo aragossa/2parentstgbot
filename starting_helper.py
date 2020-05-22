@@ -86,7 +86,7 @@ def text_message_handler (bot, user, input_value):
                 send_thnx_message_text = user.select_message('THANKS_MESSAGE')
                 remove_keyboard = additional_question_remove_keyboard()
                 user.bot.send_message(chat_id=user.uid, text=send_thnx_message_text, reply_markup=remove_keyboard)
-                user.send_main_test_results()
+                #user.send_main_test_results()
                 time.sleep(3)
                 user.send_invintation_to_aggr_bot()
                 keyboard = take_test_again(user=user)
@@ -141,10 +141,37 @@ def user_answer_handler (call, user, bot):
         #user.set_thirty_sec_notification(notification_type='SEND_RESULT')
 
         user.send_main_test_results()
-        time.sleep(3)
+        time.sleep(30)
         send_text = user.select_message('ADD_TEST_START')
         keyboard = select_next_step(user)
         bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
+
+def additional_question_inline_handler(call, user, bot):
+    dbconnector = Dbconnetor()
+    data = call.data.split('_')
+    answer = data[2]
+    if answer == 'male' or answer == 'female':
+        next_question_num = 3
+        user.save_answer(question_num=next_question_num - 1, answer=answer, test_type='ADD_TEST')
+        edit_text = user.select_question(question_num=next_question_num - 1, test_type='ADD_TEST')
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=edit_text)
+        user.send_additional_question(question_num=next_question_num)
+    elif answer == 'unknown':
+        user.save_answer(question_num=4, answer=answer, test_type='ADD_TEST')
+        user.stop_notification()
+        user.change_user_state('')
+        send_thnx_message_text = user.select_message('THANKS_MESSAGE')
+        remove_keyboard = additional_question_remove_keyboard()
+        user.bot.send_message(chat_id=user.uid, text=send_thnx_message_text, reply_markup=remove_keyboard)
+        #user.send_main_test_results()
+        time.sleep(3)
+        user.send_invintation_to_aggr_bot()
+        keyboard = take_test_again(user=user)
+        send_text = user.select_message('CONTINUE_TEST')
+        #user.set_thirty_sec_notification(notification_type='SEND_AGGR')
+        bot.send_message(chat_id=user.uid, text=send_text, reply_markup=keyboard)
+
+
 
 
 def main_test_complite_handler(call, user, bot):
@@ -181,6 +208,4 @@ def send_continue_test(user):
         user.send_question(question_num=question_to_send)
     elif additional_question_to_send <= max_count_additional_questions:
         user.send_additional_question(question_num=additional_question_to_send, test_type='ADD_TEST')
-
-
 
