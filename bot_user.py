@@ -122,6 +122,9 @@ class Botuser():
         self.dbconnector.execute_insert_query("""
                         UPDATE test_bot.test_stat SET test_status = 'DELETED' WHERE user_id = {};
                             """.format(self.uid))
+        self.dbconnector.execute_insert_query("""
+                        UPDATE test_bot.users_state SET child_num = 1 WHERE user_id = {};
+                            """.format(self.uid))
 
     def select_question_number_to_send(self):
         max_count = self.dbconnector.execute_select_query(
@@ -228,7 +231,10 @@ class Botuser():
             self.bot.send_sticker(self.uid, sticker)
             time.sleep(3)
             percentage = self.get_stats(percentage)
-            send_message = self.select_message(message_index='RESULT_MESSAGE_1').format(percentage)
+            if self.get_child_num() < 2:
+                send_message = self.select_message(message_index='RESULT_MESSAGE_1').format(percentage)
+            else:
+                send_message = self.select_message(message_index='RESULT_MESSAGE_2').format(percentage)
             if keyboard:
                 self.bot.send_message(chat_id=self.uid, text=send_message, reply_markup=keyboard)
             else:
@@ -266,6 +272,12 @@ class Botuser():
             "SELECT count(user_id) from test_bot.test_stat WHERE test_result = {}".format(test_result))
         percentage = round(bad_results[0]/all_answer[0] * 100, 0)
         return percentage
+
+    def get_child_num(self):
+        result = self.dbconnector.execute_select_query("""
+            SELECT child_num FROM test_bot.users_state WHERE user_id = {};""".format(self.uid))
+        if result:
+            return result[0]
 
     def stop_notification(self):
         self.dbconnector.execute_insert_query("""
