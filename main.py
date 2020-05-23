@@ -1,5 +1,5 @@
 import logging
-import threading
+#import threading
 
 import telebot
 from telebot import apihelper
@@ -143,8 +143,8 @@ def next_step_selection(call):
         user.send_message(message_index="ERROR_MESSAGE")
 
 
-th = threading.Thread(target=notificator.get_active_notifications, args=())
-th.start()
+# th = threading.Thread(target=notificator.get_active_notifications, args=())
+# th.start()
 
 
 bot.polling(none_stop=True)

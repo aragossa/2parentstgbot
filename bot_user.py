@@ -64,6 +64,8 @@ class Botuser():
         self.bot.send_message(chat_id=self.uid, text=text, reply_markup=keyboard)
 
     def send_additional_question(self, question_num, test_type='ADD_TEST'):
+        new_state = ('{}_{}'.format(test_type, question_num))
+        self.change_user_state(new_state)
         text = self.select_question(question_num=question_num, test_type=test_type)
         if question_num == 2:
             keyboard = additional_question_gender_answers(user=self)
@@ -71,7 +73,7 @@ class Botuser():
             keyboard = skip_game_question(user=self)
         else:
             keyboard = additional_question_remove_keyboard()
-        self.change_user_state('{}_{}'.format(test_type, question_num))
+
         self.bot.send_message(chat_id=self.uid, text=text, reply_markup=keyboard)
 
     def join_to_bot_users(self, lang, last_name, first_name, username, ref_key='Notset'):
@@ -180,10 +182,14 @@ class Botuser():
             return status[0]
 
     def change_user_state(self, user_state):
-        self.dbconnector.execute_insert_query("""
-            UPDATE test_bot.users_state SET user_state = '{1}'
-            WHERE user_id = {0};
-        """.format(self.uid, user_state))
+
+        query = """INSERT INTO test_bot.users_state
+	        ( user_id,  user_state )
+	    VALUES ( '{}', '{}' )
+	    ON CONFLICT ON CONSTRAINT idx_users_state_user_id
+	    DO UPDATE SET user_state = '{}';
+        """.format(self.uid, user_state, user_state )
+        self.dbconnector.execute_insert_query(query)
 
     def get_username(self):
         result = self.dbconnector.execute_select_many_query(
@@ -203,21 +209,30 @@ class Botuser():
             self.bot.send_message(chat_id=user, text=send_msg)
             time.sleep(1)
 
-    def send_main_test_results(self):
+    def send_main_test_results(self, keyboard=None):
         dbconnector = Dbconnetor()
         positive_answer = self.select_positive_answer()
         all_questions = dbconnector.count_questions()
         percentage = int(round((positive_answer / all_questions) * 100, 0))
+        user_lang = self.get_user_lang()
         if percentage == 0:
-            self.send_message(message_index='AGGR_BOT_GOOD')
+            sticker = open('imgs/{}_{}_percent.webp'.format(user_lang, percentage), 'rb')
+            self.bot.send_sticker(self.uid, sticker)
+            send_message =self.select_message(message_index='AGGR_BOT_GOOD')
+            if keyboard:
+                self.bot.send_message(chat_id=self.uid, text=send_message, reply_markup=keyboard)
+            else:
+                self.bot.send_message(chat_id=self.uid, text=send_message)
         else:
-            user_lang = self.get_user_lang()
             sticker = open('imgs/{}_{}_percent.webp'.format(user_lang, percentage), 'rb')
             self.bot.send_sticker(self.uid, sticker)
             time.sleep(3)
             percentage = self.get_stats(percentage)
             send_message = self.select_message(message_index='RESULT_MESSAGE_1').format(percentage)
-            self.bot.send_message(chat_id=self.uid, text=send_message)
+            if keyboard:
+                self.bot.send_message(chat_id=self.uid, text=send_message, reply_markup=keyboard)
+            else:
+                self.bot.send_message(chat_id=self.uid, text=send_message)
 
     def add_child(self):
         self.dbconnector.execute_insert_query("""
