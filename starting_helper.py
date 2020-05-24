@@ -1,4 +1,4 @@
-from buttons_helper import select_next_step, take_test_again, skip_game_question, additional_question_remove_keyboard, \
+from buttons_helper import select_next_step, take_test_again,  \
     select_next_step_additional_question
 from dbconnector import Dbconnetor
 import time
@@ -14,12 +14,7 @@ def stating_handler(bot, user, message):
         if question_to_send <= max_count_questions:
             user.send_question(question_num=question_to_send)
         elif additional_question_to_send <= max_count_additional_questions:
-            if question_to_send == 3:
-                keyboard = skip_game_question(user=user)
-                user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST', reply_markup=keyboard)
-            else:
-                keyboard = additional_question_remove_keyboard()
-                user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST',reply_markup=keyboard)
+            user.send_additional_question(question_num=question_to_send, test_type='ADD_TEST')
         else:
             user.send_invintation_to_aggr_bot()
     else:

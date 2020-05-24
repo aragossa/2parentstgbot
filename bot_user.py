@@ -69,6 +69,8 @@ class Botuser():
         text = self.select_question(question_num=question_num, test_type=test_type)
         if question_num == 2:
             keyboard = additional_question_gender_answers(user=self)
+        elif question_num == 3:
+            keyboard = skip_game_question(user=self)
         elif question_num == 4:
             keyboard = skip_game_question(user=self)
         else:
