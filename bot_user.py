@@ -64,6 +64,8 @@ class Botuser():
         self.bot.send_message(chat_id=self.uid, text=text, reply_markup=keyboard)
 
     def send_additional_question(self, question_num, test_type='ADD_TEST'):
+        if question_num == 10:
+            question_num = 1
         new_state = ('{}_{}'.format(test_type, question_num))
         self.change_user_state(new_state)
         text = self.select_question(question_num=question_num, test_type=test_type)

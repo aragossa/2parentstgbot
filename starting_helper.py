@@ -1,4 +1,4 @@
-from buttons_helper import select_next_step, take_test_again,  \
+from buttons_helper import select_next_step, take_test_again, \
     select_next_step_additional_question
 from dbconnector import Dbconnetor
 import time
