@@ -2,6 +2,7 @@ from buttons_helper import select_next_step, take_test_again, \
     select_next_step_additional_question
 from dbconnector import Dbconnetor
 import time
+from post_helper import send_post
 
 
 def stating_handler(bot, user, message):
@@ -68,7 +69,9 @@ def check_status(user, ref_key, last_name, first_name, username):
 def text_message_handler (bot, user, input_value):
     user_state = user.getstate()
     if user_state:
-        if user_state.split('_')[2].isdigit():
+        if user_state == 'INPUT_INDEX':
+            send_post (user, input_value)
+        elif user_state.split('_')[2].isdigit():
             dbconnector = Dbconnetor()
             current_question = int(user_state.split('_')[2])
             question_to_send = current_question + 1
@@ -82,6 +85,7 @@ def text_message_handler (bot, user, input_value):
                 send_thnx_message_text = user.select_message('THANKS_MESSAGE')
                 keyboard = select_next_step_additional_question(user=user)
                 user.bot.send_message(chat_id=user.uid, text=send_thnx_message_text, reply_markup=keyboard)
+
 
 
 

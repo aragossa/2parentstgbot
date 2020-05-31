@@ -8,6 +8,7 @@ from bot_user import Botuser
 from dbconnector import Dbconnetor
 import starting_helper
 from notificator import Notificator
+from post_helper import enter_post_index
 
 logging.basicConfig(
     filename='errors.log',
@@ -60,6 +61,17 @@ def handlestart(m):
     user = Botuser(uid=m.chat.id, bot=bot)
     try:
         user.send_select_lang_message()
+    except:
+        logging.exception(str(m))
+        logging.exception('Got exception on main handler')
+        user.send_message(message_index="ERROR_MESSAGE")
+
+
+@bot.message_handler(commands=['sendpostbyindex'])
+def handlestart(m):
+    user = Botuser(uid=m.chat.id, bot=bot)
+    try:
+        enter_post_index(user)
     except:
         logging.exception(str(m))
         logging.exception('Got exception on main handler')

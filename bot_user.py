@@ -298,3 +298,12 @@ class Botuser():
                     message_index = '{}', 
                     notification_datetime = '{}'
                     WHERE user_id = {}""".format(notification_type, input_notification_datetime, self.uid))
+
+    def send_post_to_users(self, post_index):
+        users = self.dbconnector.execute_select_many_query(
+            "SELECT user_id from core.users WHERE test_bot_join_date IS NOT NULL")
+        post = self.select_message(post_index)
+        for user in users:
+            self.bot.send_message(chat_id=user[0], text=post, parse_mode='Markdown')
+            time.sleep(1)
+
