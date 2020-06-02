@@ -68,7 +68,7 @@ def handlestart(m):
 
 
 @bot.message_handler(commands=['sendpostbyindex'])
-def handlestart(m):
+def sendpostbyindex(m):
     user = Botuser(uid=m.chat.id, bot=bot)
     try:
         enter_post_index(user)
@@ -90,7 +90,7 @@ def simpletextmessage(m):
 
 
 @bot.callback_query_handler(func=lambda call: call.data[:5] == 'lang_')
-def test_answer_handler(call):
+def test_lang_handler(call):
     user = Botuser(uid=call.message.chat.id, bot=bot)
     try:
         starting_helper.language_selection_helper(call=call, user=user, bot=bot)

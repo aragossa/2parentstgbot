@@ -70,6 +70,7 @@ def text_message_handler (bot, user, input_value):
     user_state = user.getstate()
     if user_state:
         if user_state == 'INPUT_INDEX':
+            user.change_user_state('')
             send_post (user, input_value)
         elif user_state.split('_')[2].isdigit():
             dbconnector = Dbconnetor()
