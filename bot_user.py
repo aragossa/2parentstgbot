@@ -1,5 +1,7 @@
 import time
 
+import telebot
+
 from dbconnector import Dbconnetor
 from buttons_helper import select_language_keyboard, question_answers, additional_question_gender_answers, \
     additional_question_remove_keyboard, skip_game_question
@@ -301,9 +303,13 @@ class Botuser():
 
     def send_post_to_users(self, post_index):
         users = self.dbconnector.execute_select_many_query(
-            "SELECT user_id from core.users WHERE test_bot_join_date IS NOT NULL")
+            "SELECT user_id from core.users WHERE test_bot_join_date IS NOT NULL AND test_bot_block_date IS NULL")
         post = self.select_message(post_index)
         for user in users:
-            self.bot.send_message(chat_id=user[0], text=post, parse_mode='Markdown')
-            time.sleep(1)
+            try:
+                self.bot.send_message(chat_id=user[0], text=post, parse_mode='Markdown')
+                time.sleep(1)
+            except telebot.apihelper.ApiException:
+                self.dbconnector.execute_insert_query("""UPDATE core.users SET test_bot_block_date = '{}' WHERE user_id = '{}'
+                                            """.format(datetime.datetime.now(), user[0]))
 
